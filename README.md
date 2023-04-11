@@ -12,6 +12,9 @@ make
 
 and check to see that everything compiles correctly. We recommend using Linux or MacOS for the homework since installing `make` is easier. Linux uses GNU C++ compiler, while MacOS uses XCode C++ compiler. 
 
+## Due Dates
+* **HW1 is due on April 10 (23:59pm).**
+
 ## Get started on HW1
 
 Open up the README for homework 1 in src/hw1/README.md, or view it [here](src/hw1/README.md). Good luck and have fun!
