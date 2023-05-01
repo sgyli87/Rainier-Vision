@@ -332,13 +332,13 @@ image make_gx_filter()
     ************************************************************************/
     image filter = make_image(3,3,1);
     set_pixel(filter,0,0,0,-1);
-    set_pixel(filter,0,1,0,0);
-    set_pixel(filter,0,2,0,1);
-    set_pixel(filter,1,0,0,-2);
+    set_pixel(filter,0,1,0,-2);
+    set_pixel(filter,0,2,0,-1);
+    set_pixel(filter,1,0,0,0);
     set_pixel(filter,1,1,0,0);
-    set_pixel(filter,1,2,0,2);
-    set_pixel(filter,2,0,0,-1);
-    set_pixel(filter,2,1,0,0);
+    set_pixel(filter,1,2,0,0);
+    set_pixel(filter,2,0,0,1);
+    set_pixel(filter,2,1,0,2);
     set_pixel(filter,2,2,0,1);
     
     return filter;
@@ -352,13 +352,13 @@ image make_gy_filter()
     ************************************************************************/
     image filter = make_image(3,3,1);
     set_pixel(filter,0,0,0,-1);
-    set_pixel(filter,0,1,0,-2);
-    set_pixel(filter,0,2,0,-1);
-    set_pixel(filter,1,0,0,0);
+    set_pixel(filter,0,1,0,0);
+    set_pixel(filter,0,2,0,1);
+    set_pixel(filter,1,0,0,-2);
     set_pixel(filter,1,1,0,0);
-    set_pixel(filter,1,2,0,0);
-    set_pixel(filter,2,0,0,1);
-    set_pixel(filter,2,1,0,2);
+    set_pixel(filter,1,2,0,2);
+    set_pixel(filter,2,0,0,-1);
+    set_pixel(filter,2,1,0,0);
     set_pixel(filter,2,2,0,1);
     
     return filter;
@@ -412,7 +412,7 @@ image *sobel_image(image im)
       x = re_x.data[i];
       y = re_y.data[i];
       mag.data[i] = sqrt(pow(x,2)+pow(y,2));
-      theta.data[i] = atan2f(x,y);
+      theta.data[i] = atan2f(y,x);
     }
     
     sobelimg[0] = mag;
