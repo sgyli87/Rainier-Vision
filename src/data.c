@@ -116,11 +116,10 @@ char *fgetl(FILE *fp)
     return line;
 }
 
+
 void free_data(data d)
 {
     free_matrix(d.X);
     free_matrix(d.y);
 }
-
-
 
