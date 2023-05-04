@@ -127,9 +127,9 @@ image structure_matrix(image im, float sigma)
 {
     assert(im.c == 1 || im.c == 3);
     image im_to_process;
-    //convert to grayscale
-    if(im.c==1) im_to_process = copy_image(im);
-    else im_to_process = rgb_to_grayscale(im);
+   
+    im_to_process = copy_image(im);
+    //else im_to_process = rgb_to_grayscale(im);
 
     image S = make_image(im_to_process.w, im_to_process.h, 3);
 
@@ -172,7 +172,7 @@ image cornerness_response(image S)
             float IyIy = get_pixel(S,w,h,1);
             float IxIy = get_pixel(S,w,h,2);
 
-            set_pixel(R, w, h, 0, (IxIx*IyIy) - pow(IxIy,2) - (0.06 * pow(IxIx+IyIy,2)));
+            set_pixel(R, w, h, 0, (IxIx*IyIy) - powf(IxIy,2) - 0.06 * powf(IxIx+IyIy,2));
         }
     }   
     return R;
@@ -210,38 +210,21 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
 {
     // Calculate structure matrix
     image S = structure_matrix(im, sigma);
-
     // Estimate cornerness
     image R = cornerness_response(S);
-
-    FILE* f = fopen("number.txt", "w");  // open the file for writing
-
-    for(int x = 0; x < im.w; x++){
-        for(int y = 0; y < im.h; y++){
-                fprintf(f,"%f", get_pixel(R,x,y,0));
-                fprintf(f,"\n"); 
-        }
-    }
-
     // Run NMS on the responses
     image Rnms = nms_image(R, nms);
 
     //TODO: count number of responses over threshold
     int count = 0; // change this
-
+    
     for(int x = 0; x < im.w; x++){
         for(int y = 0; y < im.h; y++){
             if(get_pixel(Rnms,x,y,0)>thresh){
-                //fprintf(f,"%f", get_pixel(Rnms,x,y,0));
-                //fprintf(f,"\n"); 
                 count++;
             }
         }
     }
-
-    //fprintf(f,"%d",count);
-
-    fclose(f);
 
     *n = count; // <- set *n equal to number of corners in image.
 
@@ -256,7 +239,6 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
             }
         }
     }
-
     free_image(S);
     free_image(R);
     free_image(Rnms);

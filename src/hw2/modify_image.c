@@ -63,23 +63,19 @@ float bilinear_interpolate(image im, float x, float y, int c)
       It interpolates and returns the interpolated value.
     ************************************************************************/
     assert(c>=0 && c<im.c);
-    int x_low, x_high, y_low, y_high;
-    x_low = floorf(x);
-    y_low = floorf(y);
-    x_high = ceilf(x);
-    y_high = ceilf(y);
-
-    float d0 = x - x_low;
-    float d1 = x_high - x;
-    float d2 = y - y_low;
-    float d3 = y_high - y;
-
-    float v0 = get_pixel(im, (int)x_low, (int)y_low, c);
-    float v1 = get_pixel(im, (int)x_high,(int)y_low, c);
-    float v2 = get_pixel(im, (int)x_low,(int)y_high, c);
-    float v3 = get_pixel(im, (int)x_high,(int)y_high, c);
-    
-    return d3*(d0*v1+d1*v0)+ d2*(d0*v3 + d1*v2);
+    int x1 = floor(x);
+    int x2 = x1 + 1;
+    int y1 = floor(y);
+    int y2 = y1 + 1;
+    float V1 = get_pixel(im,x1, y2, c);
+    float V2 = get_pixel(im,x2, y2, c);
+    float V3 = get_pixel(im,x1, y1, c);
+    float V4 = get_pixel(im,x2, y1, c);
+    float A1 = (x2-x) * (y-y1);
+    float A2 = (x-x1) * (y-y1);
+    float A3 = (x2-x) * (y2-y);
+    float A4 = (x-x1) * (y2-y);
+    return V1*A1 + V2*A2 + V3*A3 + V4*A4;
 }
 
 image bilinear_resize(image im, int w, int h)

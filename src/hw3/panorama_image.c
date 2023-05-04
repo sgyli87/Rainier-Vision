@@ -121,8 +121,7 @@ float l1_distance(float *a, float *b, int n)
     for(int i = 0; i < n; i++){
         diff += fabs(a[i]-b[i]);
     }
-
-    return 0;
+    return diff;
 }
 
 // Finds best matches between descriptors of two images.
@@ -133,19 +132,22 @@ float l1_distance(float *a, float *b, int n)
 //          one other descriptor in b.
 match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
 {
-    int i,j;
+    int i,j,k;
     // We will have at most an matches.
     *mn = an;
     match *m = calloc(an, sizeof(match));
+    
     for(j = 0; j < an; ++j){
         // TODO: for every descriptor in a, find best match in b.
         // record ai as the index in *a and bi as the index in *b.
         int bind = 0; // <- find the best match
         float best_distance = 1e10f;
-
+        
         for(i = 0; i < bn; i++){
-            float dist = l1_distance(a[j].data, b[i].data, a[i].n);
-            if(dist<best_distance){
+            float dist = l1_distance(a[j].data, b[i].data, b[i].n);
+            //printf("%f",dist);
+            //printf("\n");
+            if(dist < best_distance){
                 best_distance = dist;
                 bind = i;
             }
@@ -159,7 +161,6 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
 
     int count = 0;
     int *seen = calloc(bn, sizeof(int));
-
     // TODO: we want matches to be injective (one-to-one).
     // Sort matches based on distance using match_compare and qsort.
     // Then throw out matches to the same element in b. Use seen to keep track.
@@ -167,18 +168,20 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     // Some points will not be in a match.
     // In practice just bring good matches to front of list, set *mn.
     qsort(m, an, sizeof(match), match_compare);
-
-    for(int i = 0; i < an; i++){
-        for(int j = i + 1; j < an; j++){
-            if(m[i].bi == m[j].bi){
-                for(int k = j; k < an; k++){
-                    m[k] = m[k+1];
-                }
-                j--;
-                an--;
-            }
+    
+    for(i=0;i<an;i++){
+        int b_no = m[i].bi;
+        if(seen[b_no]!=1){
+            seen[b_no]=1;
+            count++;
         }
-        count++;
+        else{
+            for(j = i; j < an-1; j++){
+                m[j] = m[j+1];
+            }
+            an--;
+            i--;
+        }
     }
 
     *mn = count;
@@ -255,7 +258,7 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 void randomize_matches(match *m, int n)
 {
     // TODO: implement Fisher-Yates to shuffle the array.
-    for(int i = 0; i < n; i++){
+    for(int i = 0; i < n-1; i++){
         int j = (rand()%(n-i))+i;
         match temp = m[i];
         m[i] = m[j];
@@ -335,7 +338,6 @@ matrix compute_homography(match *matches, int n)
 // returns: matrix representing most common homography between matches.
 matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
 {
-    int e;
     int best = 0;
     matrix Hb = make_translation_homography(256, 0);
     // TODO: fill in RANSAC algorithm.
@@ -400,8 +402,8 @@ image combine_images(image a, image b, matrix H)
     // Can disable this if you are making very big panoramas.
     // Usually this means there was an error in calculating H.
     if(w > 7000 || h > 7000){
-        fprintf(stderr, "output too big, stopping\n");
-        return copy_image(a);
+         fprintf(stderr, "output too big, stopping\n");
+         return copy_image(a);
     }
 
     int i,j,k;
@@ -426,10 +428,20 @@ image combine_images(image a, image b, matrix H)
             point project_p = project_point(H, p);
             
             if((project_p.x>-0.5f && project_p.x<b.w-0.5f 
-            && project_p.y>-0.5f && project_p.y<b.h-0.5f)&& x-dx >= 0 && x-dx < c.w && y-dy >= 0 && y-dy < c.h ){
-                
+            && project_p.y>-0.5f && project_p.y<b.h-0.5f)&& x-dx >= 0 
+            && x-dx < c.w && y-dy >= 0 
+            && y-dy < c.h ){
+
+            int b_nonempty = 1;
+
+            int c1=0;
+            for(int ch=0;ch<b.c;ch++)if(get_pixel(b,project_p.x,project_p.y,ch))c1++;
+            if(c1==0)b_nonempty=0;
+   
                 for(int ch = 0; ch < c.c; ch++){
-                    set_pixel(c, x-dx, y-dy, ch, bilinear_interpolate(b,project_p.x,project_p.y,ch));
+                    if(b_nonempty){
+                        set_pixel(c, x-dx, y-dy, ch, bilinear_interpolate(b,project_p.x,project_p.y,ch));
+                    }
                 }
             }
         }
@@ -487,7 +499,7 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
 image cylindrical_project(image im, float f)
 {
     //TODO: project image onto a cylinder
-    image c = copy_image(im);
+    image c = make_image(im.w, im.h,im.c);
     
     float x_c = im.w/2.0;
     float y_c = im.h/2.0;
@@ -497,9 +509,9 @@ image cylindrical_project(image im, float f)
             float theta = (x-x_c)/f;
             float h = (y-y_c)/f;
 
-            float x_p = sin(theta);
+            float x_p = sinf(theta);
             float y_p = h;
-            float z_p = cos(theta);
+            float z_p = cosf(theta);
 
             float nx = (f*x_p/z_p) + x_c;
             float ny = (f*y_p/z_p) + y_c;
@@ -511,6 +523,5 @@ image cylindrical_project(image im, float f)
             }
         }
     }
-    
     return c;
 }
