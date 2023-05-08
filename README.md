@@ -1,1 +1,1 @@
-##HUSKY Vision Image Processing and Computer Vision library
+# HUSKY Vision Image Processing and Computer Vision library
